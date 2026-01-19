@@ -21,15 +21,15 @@ export default function HomeClient({ initialSongs }: HomeClientProps) {
                 {/* Hero Section */}
                 <header className="mb-12 text-center lg:text-left flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                     <div>
-                        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-widest text-xs mb-2">
+                        <div className="flex items-center gap-2 text-primary font-bold uppercase tracking-widest text-xs mb-2">
                             <Layers size={14} />
                             <span>Espacio de Trabajo</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">
+                        <h1 className="text-4xl md:text-5xl font-black text-foreground tracking-tight">
                             Repertorio
                         </h1>
-                        <p className="mt-3 text-lg text-gray-600 dark:text-gray-400 max-w-2xl">
-                            Gestiona tus ensayos, tomas de estudio y mezclas en un solo lugar.
+                        <p className="text-lg text-muted-foreground mt-2 max-w-2xl">
+                            Gestiona tu catálogo musical, organiza ensayos y trackea el progreso de grabación.
                         </p>
                     </div>
                 </header>
@@ -37,8 +37,8 @@ export default function HomeClient({ initialSongs }: HomeClientProps) {
                 {/* Library List */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between mb-6 px-2">
-                        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">
-                            Producciones Activas • {songs.length}
+                        <h2 className="text-sm font-black text-muted-foreground uppercase tracking-widest">
+                            Canciones Activas
                         </h2>
                     </div>
 
@@ -47,8 +47,14 @@ export default function HomeClient({ initialSongs }: HomeClientProps) {
                             <SongAccordion key={song.id} song={song} />
                         ))
                     ) : (
-                        <div className="text-center py-20 border-2 border-dashed border-gray-200 dark:border-gray-800 rounded-3xl">
-                            <p className="text-gray-400">No se encontraron canciones en tu repertorio.</p>
+                        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-3xl bg-muted/30">
+                            <div className="p-4 bg-secondary rounded-full text-muted-foreground mb-4 animate-bounce">
+                                <Layers size={40} />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground mb-2">Tu repertorio está vacío</h3>
+                            <p className="text-muted-foreground max-w-sm text-center">
+                                No se encontraron canciones activas. Pídele al administrador que suba el primer material.
+                            </p>
                         </div>
                     )}
                 </section>

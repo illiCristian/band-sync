@@ -101,17 +101,17 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
     };
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-800 flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden border border-border flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                    <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-                        <Upload size={20} className="text-indigo-600" />
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                    <h3 className="text-xl font-black text-foreground flex items-center gap-2">
+                        <Upload size={20} className="text-primary" />
                         Subir Audio
                     </h3>
-                    <button onClick={onCancel} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                        <X size={20} className="text-gray-500" />
+                    <button onClick={onCancel} className="p-2 hover:bg-muted rounded-full transition-colors">
+                        <X size={20} className="text-muted-foreground hover:text-foreground" />
                     </button>
                 </div>
 
@@ -120,33 +120,33 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
 
                         {/* 1. Song Selection */}
                         <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">1. Seleccionar Canción</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">1. Seleccionar Canción</label>
                             <div className="grid grid-cols-2 gap-4">
                                 <button
                                     type="button"
                                     onClick={() => setMode('EXISTING')}
                                     className={`p-4 rounded-xl border-2 text-left transition-all ${mode === 'EXISTING'
-                                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                                        : 'border-gray-100 dark:border-gray-800 hover:border-indigo-300'}`}
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-border hover:border-input'}`}
                                 >
-                                    <span className="block font-bold text-gray-900 dark:text-white mb-1">Canción Existente</span>
-                                    <span className="text-xs text-gray-500">Añadir al repertorio</span>
+                                    <span className="block font-bold text-foreground mb-1">Canción Existente</span>
+                                    <span className="text-xs text-muted-foreground">Añadir al repertorio</span>
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setMode('NEW')}
                                     className={`p-4 rounded-xl border-2 text-left transition-all ${mode === 'NEW'
-                                        ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
-                                        : 'border-gray-100 dark:border-gray-800 hover:border-indigo-300'}`}
+                                        ? 'border-primary bg-primary/5'
+                                        : 'border-border hover:border-input'}`}
                                 >
-                                    <span className="block font-bold text-gray-900 dark:text-white mb-1">Crear Nueva</span>
-                                    <span className="text-xs text-gray-500">Empezar de cero</span>
+                                    <span className="block font-bold text-foreground mb-1">Crear Nueva</span>
+                                    <span className="text-xs text-muted-foreground">Empezar de cero</span>
                                 </button>
                             </div>
 
                             {mode === 'EXISTING' ? (
                                 <select
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full p-4 bg-input border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary"
                                     value={selectedSongId}
                                     onChange={(e) => setSelectedSongId(e.target.value)}
                                     required={mode === 'EXISTING'}
@@ -160,7 +160,7 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
                                 <input
                                     type="text"
                                     placeholder="Título de la canción..."
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-lg"
+                                    className="w-full p-4 bg-input border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary font-bold text-lg text-foreground"
                                     value={newSongTitle}
                                     onChange={(e) => setNewSongTitle(e.target.value)}
                                     required={mode === 'NEW'}
@@ -170,20 +170,20 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
 
                         {/* 2. Recording Details */}
                         <div className="space-y-4">
-                            <label className="text-xs font-bold uppercase tracking-widest text-gray-400">2. Detalles de la Grabación</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">2. Detalles de la Grabación</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <input
                                     type="text"
                                     placeholder="Nombre de Versión (ej. Demo Bajo)"
                                     value={versionName}
                                     onChange={(e) => setVersionName(e.target.value)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full p-3 bg-input border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary text-foreground"
                                     required
                                 />
                                 <select
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value as RecordingCategory)}
-                                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                                    className="w-full p-3 bg-input border border-border rounded-xl outline-none focus:ring-2 focus:ring-primary text-foreground"
                                 >
                                     <option value="REHEARSAL">Ensayo</option>
                                     <option value="STUDIO">Estudio</option>
@@ -195,7 +195,7 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
 
                         {/* 3. File Upload & Trimming */}
                         <div
-                            className={`border-2 border-dashed rounded-3xl p-12 text-center transition-all group ${file ? 'border-green-500 bg-green-50/10' : 'border-gray-200 dark:border-gray-700'
+                            className={`border-2 border-dashed rounded-3xl p-12 text-center transition-all group ${file ? 'border-success bg-success/5' : 'border-border'
                                 }`}
                         >
                             <input
@@ -207,45 +207,45 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
                             />
                             {file ? (
                                 <div className="flex flex-col items-center gap-3">
-                                    <CheckCircle2 size={48} className="text-green-500 animate-in zoom-in duration-300" />
+                                    <CheckCircle2 size={48} className="text-success animate-in zoom-in duration-300" />
                                     <div>
-                                        <p className="font-black text-gray-900 dark:text-white text-lg">{file.name}</p>
-                                        <p className="text-sm text-gray-400">{(file.size / (1024 * 1024)).toFixed(2)} MB • Listo para subir</p>
-                                        {originalDuration > 0 && <p className="text-xs text-indigo-500 font-bold mt-1">Duración: {formatSecondsToTime(originalDuration)}</p>}
+                                        <p className="font-black text-foreground text-lg">{file.name}</p>
+                                        <p className="text-sm text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB • Listo para subir</p>
+                                        {originalDuration > 0 && <p className="text-xs text-primary font-bold mt-1">Duración: {formatSecondsToTime(originalDuration)}</p>}
                                     </div>
 
-                                    <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 w-full max-w-sm text-left">
+                                    <div className="mt-4 p-4 bg-card rounded-xl border border-border w-full max-w-sm text-left">
                                         <div className="flex items-center gap-2 mb-3">
                                             <input
                                                 type="checkbox"
                                                 id="trim-toggle"
                                                 checked={isTrimming}
                                                 onChange={(e) => setIsTrimming(e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                                className="w-4 h-4 text-primary rounded focus:ring-primary"
                                             />
-                                            <label htmlFor="trim-toggle" className="text-sm font-bold text-gray-700 dark:text-gray-300 cursor-pointer">Recortar Audio</label>
+                                            <label htmlFor="trim-toggle" className="text-sm font-bold text-foreground cursor-pointer">Recortar Audio</label>
                                         </div>
 
                                         {isTrimming && (
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="text-xs text-gray-500 font-bold">Inicio (min:seg)</label>
+                                                    <label className="text-xs text-muted-foreground font-bold">Inicio (min:seg)</label>
                                                     <input
                                                         type="text"
                                                         value={trimStart}
                                                         onChange={(e) => setTrimStart(e.target.value)}
                                                         placeholder="00:00"
-                                                        className="w-full p-2 bg-gray-50 dark:bg-gray-900 border rounded-lg text-sm"
+                                                        className="w-full p-2 bg-input border rounded-lg text-sm text-foreground"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="text-xs text-gray-500 font-bold">Fin (min:seg)</label>
+                                                    <label className="text-xs text-muted-foreground font-bold">Fin (min:seg)</label>
                                                     <input
                                                         type="text"
                                                         value={trimEnd}
                                                         onChange={(e) => setTrimEnd(e.target.value)}
                                                         placeholder="01:30"
-                                                        className="w-full p-2 bg-gray-50 dark:bg-gray-900 border rounded-lg text-sm"
+                                                        className="w-full p-2 bg-input border rounded-lg text-sm text-foreground"
                                                     />
                                                 </div>
                                             </div>
@@ -255,24 +255,24 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
                                     <button
                                         type="button"
                                         onClick={() => { setFile(null); setIsTrimming(false); }}
-                                        className="mt-2 text-xs font-bold text-red-500 hover:text-red-600 underline underline-offset-4"
+                                        className="mt-2 text-xs font-bold text-destructive hover:text-destructive/90 underline underline-offset-4"
                                     >
                                         Cambiar archivo
                                     </button>
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center gap-4">
-                                    <div className="p-5 bg-indigo-50 dark:bg-indigo-900/20 rounded-full group-hover:scale-110 transition-transform duration-300">
-                                        <Music size={32} className="text-indigo-600" />
+                                    <div className="p-5 bg-primary/5 rounded-full group-hover:scale-110 transition-transform duration-300">
+                                        <Music size={32} className="text-primary" />
                                     </div>
                                     <div>
-                                        <p className="font-black text-gray-900 dark:text-white text-xl">Subir Grabación</p>
-                                        <p className="text-sm text-gray-500">Archivos MP3, WAV o AAC</p>
+                                        <p className="font-black text-foreground text-xl">Subir Grabación</p>
+                                        <p className="text-sm text-muted-foreground">Archivos MP3, WAV o AAC</p>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => document.getElementById('global-file-upload-input')?.click()}
-                                        className="px-8 py-4 bg-indigo-600 text-white rounded-2xl text-base font-black uppercase tracking-widest shadow-xl shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all"
+                                        className="px-8 py-4 bg-primary text-primary-foreground rounded-2xl text-base font-black uppercase tracking-widest shadow-xl shadow-primary/25 hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all"
                                     >
                                         Seleccionar Archivo
                                     </button>
@@ -285,14 +285,14 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
                             <button
                                 type="button"
                                 onClick={onCancel}
-                                className="px-6 py-3 font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                className="px-6 py-3 font-bold text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 type="submit"
                                 disabled={!file || isUploading || (mode === 'EXISTING' && !selectedSongId) || (mode === 'NEW' && !newSongTitle)}
-                                className={`px-8 py-3 bg-indigo-600 text-white font-black rounded-xl shadow-xl shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2 ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700 hover:scale-105 active:scale-95'
+                                className={`px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl shadow-xl shadow-primary/25 transition-all flex items-center gap-2 ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:scale-105 active:scale-95'
                                     }`}
                             >
                                 {isUploading ? (

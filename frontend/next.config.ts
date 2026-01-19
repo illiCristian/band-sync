@@ -1,12 +1,16 @@
 import type { NextConfig } from "next";
+
 const nextConfig: NextConfig = {
+  /* config options here */
   async rewrites() {
-    // Usamos el valor por defecto si no existe la variable para que no rompa el build
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     return [
       {
         source: '/api/:path*',
-        destination: `${backendUrl}/:path*`,
+        destination: 'http://localhost:3001/api/:path*', // Proxy to Backend
+      },
+      {
+        source: '/uploads/:path*',
+        destination: 'http://localhost:3001/uploads/:path*', // Proxy to Uploads
       },
     ];
   },

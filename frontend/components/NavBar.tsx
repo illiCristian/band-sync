@@ -13,13 +13,13 @@ export default function NavBar() {
     const isActive = (path: string) => pathname === path;
 
     return (
-        <nav className="sticky top-0 z-50 w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 transition-colors">
+        <nav className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border transition-colors">
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2 group">
-                    <div className="p-2 bg-indigo-600 rounded-xl text-white group-hover:scale-110 transition-transform shadow-lg shadow-indigo-200 dark:shadow-none">
+                    <div className="p-2 bg-primary rounded-xl text-primary-foreground group-hover:scale-110 transition-transform shadow-lg shadow-primary/25">
                         <Mic2 size={24} />
                     </div>
-                    <span className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter">
+                    <span className="text-2xl font-black text-foreground tracking-tighter">
                         LosMapes
                     </span>
                 </Link>
@@ -28,15 +28,15 @@ export default function NavBar() {
                 <div className="hidden md:flex gap-8 items-center">
                     <Link
                         href="/"
-                        className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                        className={`text-sm font-bold transition-colors ${isActive('/') ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
                     >
                         Inicio
                     </Link>
                     <Link
                         href="/admin"
-                        className={`transition-all active:scale-95 ${isActive('/admin')
-                            ? 'px-5 py-2.5 bg-indigo-600 text-white text-sm font-black rounded-xl shadow-lg shadow-indigo-200 dark:shadow-none'
-                            : 'text-sm font-bold text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                        className={`transition-all active:scale-95 px-5 py-2.5 text-sm font-black rounded-full shadow-lg transition-all ${isActive('/admin')
+                            ? 'bg-primary text-primary-foreground shadow-primary/25'
+                            : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'}`}
                     >
                         Panel Admin
                     </Link>
@@ -47,8 +47,10 @@ export default function NavBar() {
                 <div className="flex items-center gap-4 md:hidden">
                     <ThemeToggle />
                     <button
-                        className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                        className="p-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        aria-label="Abrir menú"
+                        aria-expanded={isMenuOpen}
                     >
                         {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -57,23 +59,24 @@ export default function NavBar() {
 
             {/* Mobile Menu Dropdown */}
             {isMenuOpen && (
-                <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-6 flex flex-col gap-4 animate-in slide-in-from-top-4 duration-200">
-                    <Link
-                        href="/"
-                        onClick={() => setIsMenuOpen(false)}
-                        className={`text-lg font-bold transition-colors ${isActive('/') ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-900 dark:text-white'}`}
-                    >
-                        Inicio
-                    </Link>
-                    <Link
-                        href="/admin"
-                        onClick={() => setIsMenuOpen(false)}
-                        className={`px-5 py-3 text-center font-black rounded-xl transition-all shadow-lg ${isActive('/admin')
-                            ? 'bg-indigo-600 text-white shadow-indigo-200 dark:shadow-none'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}
-                    >
-                        Panel Admin
-                    </Link>
+                <div className="md:hidden bg-background border-b border-border px-6 py-4 animate-in slide-in-from-top-4 duration-200">
+                    {isActive('/admin') ? (
+                        <Link
+                            href="/"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="px-5 py-3 text-center font-black rounded-xl transition-all shadow-lg bg-secondary text-secondary-foreground hover:bg-muted active:scale-95 block"
+                        >
+                            ← Volver al Inicio
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/admin"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="px-5 py-3 text-center font-black rounded-xl transition-all shadow-lg bg-primary text-primary-foreground shadow-primary/25 hover:opacity-90 active:scale-95 block"
+                        >
+                            Panel Admin
+                        </Link>
+                    )}
                 </div>
             )}
         </nav>

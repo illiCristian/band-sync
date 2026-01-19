@@ -19,14 +19,13 @@ export type RecordingCategory = 'REHEARSAL' | 'STUDIO' | 'LIVE' | 'DEMO';
 export interface Recording {
     id: string;
     url: string;
-    duration: number;
-    type: string;
     versionName: string;
     category: RecordingCategory;
+    duration: number;
     recordedAt: string;
     isFinal: boolean;
-    songId: string;
-    comments: Comment[];
+    type?: string;
+    comments?: Comment[];
 }
 
 export interface Comment {

@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SongsModule } from './songs/songs.module';
 import { RecordingsModule } from './recordings/recordings.module';
 import { StorageModule } from './storage/storage.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -18,8 +19,9 @@ import { StorageModule } from './storage/storage.module';
     SongsModule,
     RecordingsModule,
     StorageModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

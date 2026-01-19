@@ -3,23 +3,35 @@
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Comment } from '@/types';
-import { Play, Pause, ListMusic } from 'lucide-react';
+import { Play, Pause, ListMusic, Sparkles, Settings2 } from 'lucide-react';
 
 interface AudioPlayerProps {
     url: string;
     comments: Comment[];
+    onTimeUpdate?: (time: number) => void;
 }
 
-export default function AudioPlayer({ url, comments }: AudioPlayerProps) {
+export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayerProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wavesurfer = useRef<WaveSurfer | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [mounted, setMounted] = useState(false);
+    const [animationsEnabled, setAnimationsEnabled] = useState(true);
 
     useEffect(() => {
         setMounted(true);
+        const saved = localStorage.getItem('playerAnimations');
+        if (saved !== null) {
+            setAnimationsEnabled(saved === 'true');
+        }
     }, []);
+
+    const toggleAnimations = () => {
+        const newValue = !animationsEnabled;
+        setAnimationsEnabled(newValue);
+        localStorage.setItem('playerAnimations', String(newValue));
+    };
 
     useEffect(() => {
         if (!containerRef.current || !mounted) return;
@@ -40,6 +52,7 @@ export default function AudioPlayer({ url, comments }: AudioPlayerProps) {
 
         wavesurfer.current.on('timeupdate', (time) => {
             setCurrentTime(time);
+            onTimeUpdate?.(time);
         });
 
         wavesurfer.current.on('finish', () => {
@@ -65,61 +78,135 @@ export default function AudioPlayer({ url, comments }: AudioPlayerProps) {
     }
 
     return (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-800 transition-all">
-            <div className="p-6">
-                <div className="mb-6 bg-gray-50/50 dark:bg-gray-800/30 rounded-xl p-4" ref={containerRef} />
+        <div className={`mx-auto w-full max-w-[900px] transition-all duration-700 ${animationsEnabled && isPlaying ? 'p-1.5' : 'p-0'}`}>
+            <div className={`bg-card rounded-2xl shadow-xl overflow-hidden border border-border transition-all duration-500 relative ${animationsEnabled && isPlaying ? 'shadow-primary/20 ring-1 ring-primary/20 scale-[1.01]' : ''
+                }`}>
+                {/* Visualizer Background Animation */}
+                {animationsEnabled && isPlaying && (
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+                        <div className="absolute top-0 -left-1/4 w-1/2 h-full bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-shimmer" />
+                    </div>
+                )}
 
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={togglePlayPause}
-                            className="w-14 h-14 flex items-center justify-center bg-indigo-600 rounded-2xl text-white hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20"
-                        >
-                            {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
-                        </button>
+                <div className="p-4 sm:p-6 lg:p-8">
+                    {/* Compact Container for waveform on mobile */}
+                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6">
+                        <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
+                            }`} ref={containerRef} />
+                    </div>
 
-                        <div className="flex flex-col">
-                            <span className="text-2xl font-bold text-gray-900 dark:text-white font-mono tracking-tighter">
-                                {Math.floor(currentTime / 60)}:{(Math.floor(currentTime) % 60).toString().padStart(2, '0')}
-                            </span>
-                            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Tiempo Actual</span>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6 max-w-[420px] sm:max-w-none mx-auto">
+                        <div className="flex items-center gap-4 sm:gap-6">
+                            <div className="relative">
+                                <button
+                                    onClick={togglePlayPause}
+                                    className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-primary rounded-2xl text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/25 z-10 relative"
+                                >
+                                    {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" className="ml-1" />}
+                                </button>
+
+                                {/* Pulse Effect */}
+                                {animationsEnabled && isPlaying && (
+                                    <div className="absolute inset-0 bg-primary/40 rounded-2xl animate-ping scale-110 opacity-75 pointer-events-none" />
+                                )}
+                            </div>
+
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl sm:text-3xl font-bold text-foreground font-mono tracking-tighter">
+                                        {Math.floor(currentTime / 60)}:{(Math.floor(currentTime) % 60).toString().padStart(2, '0')}
+                                    </span>
+                                    {isPlaying && animationsEnabled && (
+                                        <div className="flex items-end gap-[2px] h-3 mb-1 ml-1">
+                                            <div className="w-[3px] bg-primary animate-eq-1 h-full rounded-full" />
+                                            <div className="w-[3px] bg-primary animate-eq-2 h-full rounded-full" />
+                                            <div className="w-[3px] bg-primary animate-eq-3 h-full rounded-full" />
+                                        </div>
+                                    )}
+                                </div>
+                                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Posición</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <ListMusic size={18} />
+                                <span className="text-sm font-bold">{comments.length} notas</span>
+                            </div>
+
+                            {/* Animation Toggle */}
+                            <button
+                                onClick={toggleAnimations}
+                                title={animationsEnabled ? "Desactivar animaciones" : "Activar animaciones"}
+                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 ${animationsEnabled
+                                    ? 'bg-primary/10 border-primary/20 text-primary'
+                                    : 'bg-muted border-border text-muted-foreground'
+                                    }`}
+                            >
+                                <Sparkles size={16} className={animationsEnabled && isPlaying ? 'animate-pulse' : ''} />
+                            </button>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-gray-400">
-                        <ListMusic size={20} />
-                        <span className="text-sm font-medium">{comments.length} Comentarios</span>
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] px-1">Comentarios en Línea de Tiempo</h3>
-                    <div className="max-h-52 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                        {comments.map((comment) => (
-                            <button
-                                key={comment.id}
-                                onClick={() => seekTo(comment.timestampSeconds)}
-                                className="w-full text-left p-3 bg-gray-50 dark:bg-gray-800/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl transition-all group border border-transparent hover:border-indigo-100 dark:hover:border-indigo-800"
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="font-bold text-gray-700 dark:text-gray-200 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400">{comment.authorName}</span>
-                                    <span className="text-[10px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-md">
-                                        {Math.floor(comment.timestampSeconds / 60)}:{(Math.floor(comment.timestampSeconds) % 60).toString().padStart(2, '0')}
-                                    </span>
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-[0.2em] px-1">Comentarios en Línea de Tiempo</h3>
+                        <div className="max-h-52 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                            {comments.map((comment) => (
+                                <button
+                                    key={comment.id}
+                                    onClick={() => seekTo(comment.timestampSeconds)}
+                                    className="w-full text-left p-3 bg-card hover:bg-muted/50 rounded-xl transition-all group border border-transparent hover:border-border"
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-bold text-foreground text-sm group-hover:text-primary">{comment.authorName}</span>
+                                        <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-md">
+                                            {Math.floor(comment.timestampSeconds / 60)}:{(Math.floor(comment.timestampSeconds) % 60).toString().padStart(2, '0')}
+                                        </span>
+                                    </div>
+                                    <p className="text-muted-foreground text-sm line-clamp-2 leading-snug">{comment.text}</p>
+                                </button>
+                            ))}
+                            {comments.length === 0 && (
+                                <div className="text-center py-6 text-muted-foreground text-sm italic border-2 border-dashed border-border rounded-xl">
+                                    No hay comentarios todavía.
                                 </div>
-                                <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-snug">{comment.text}</p>
-                            </button>
-                        ))}
-                        {comments.length === 0 && (
-                            <div className="text-center py-6 text-gray-400 text-sm italic border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
-                                No hay comentarios todavía.
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <style jsx>{`
+                <style jsx>{`
+              @keyframes shimmer {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(200%); }
+              }
+              
+              @keyframes eq-1 {
+                0%, 100% { height: 40%; }
+                50% { height: 100%; }
+              }
+              @keyframes eq-2 {
+                0%, 100% { height: 70%; }
+                50% { height: 30%; }
+              }
+              @keyframes eq-3 {
+                0%, 100% { height: 30%; }
+                50% { height: 80%; }
+              }
+
+              .animate-shimmer {
+                animation: shimmer 3s infinite linear;
+              }
+              .animate-eq-1 { animation: eq-1 0.6s infinite ease-in-out; }
+              .animate-eq-2 { animation: eq-2 0.8s infinite ease-in-out; }
+              .animate-eq-3 { animation: eq-3 0.7s infinite ease-in-out; }
+
+              @media (prefers-reduced-motion: reduce) {
+                .animate-shimmer, .animate-ping, .animate-eq-1, .animate-eq-2, .animate-eq-3, .animate-pulse {
+                  animation: none !important;
+                }
+              }
+
               .custom-scrollbar::-webkit-scrollbar {
                 width: 4px;
               }
@@ -127,13 +214,11 @@ export default function AudioPlayer({ url, comments }: AudioPlayerProps) {
                 background: transparent;
               }
               .custom-scrollbar::-webkit-scrollbar-thumb {
-                background: #e2e8f0;
+                background: var(--muted);
                 border-radius: 10px;
               }
-              .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-                background: #1e293b;
-              }
             `}</style>
+            </div>
         </div>
     );
 }
