@@ -1,6 +1,8 @@
 import { Song } from '@/types';
 import HomeClient from '@/components/HomeClient';
 
+export const dynamic = 'force-dynamic';
+
 async function getSongs(): Promise<Song[]> {
   try {
     // We use the environment variable for the backend URL if available, else local 3001
