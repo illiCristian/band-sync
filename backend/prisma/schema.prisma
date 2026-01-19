@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Band {
+  id      String   @id @default(uuid())
+  name    String
+  members String[] // Placeholder for member list
+  songs   Song[]
+}
+
+model Song {
+  id         String      @id @default(uuid())
+  title      String
+  status     SongStatus  @default(IDEA)
+  bandId     String
+  band       Band        @relation(fields: [bandId], references: [id])
+  recordings Recording[]
+}
+
+enum SongStatus {
+  IDEA
+  RECORDED
+  PUBLISHED
+}
+
+enum RecordingCategory {
+  REHEARSAL
+  STUDIO
+  LIVE
+  DEMO
+}
+
+model Recording {
+  id          String            @id @default(uuid())
+  url         String
+  duration    Float?            @default(0)
+  type        String?           @default("audio/mpeg")
+  versionName String?           @default("Take 1")
+  category    RecordingCategory @default(REHEARSAL)
+  recordedAt  DateTime          @default(now())
+  isFinal     Boolean           @default(false)
+  songId      String
+  song        Song              @relation(fields: [songId], references: [id])
+  comments    Comment[]
+}
+
+model Comment {
+  id               String    @id @default(uuid())
+  text             String
+  timestampSeconds Float
+  authorName       String
+  recordingId      String
+  recording        Recording @relation(fields: [recordingId], references: [id])
+  createdAt        DateTime  @default(now())
+}
