@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
-
 const nextConfig: NextConfig = {
   async rewrites() {
+    // Usamos el valor por defecto si no existe la variable para que no rompa el build
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     return [
       {
@@ -10,14 +10,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Eliminamos o comentamos la parte experimental temporalmente para descartar errores
+  /*
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
     },
-    // This addresses the specific error regarding 10MB limit in the proxy/middleware
-    // @ts-ignore - Some versions might not have this in the type yet
-    middlewareClientMaxBodySize: '100mb',
   }
+  */
 };
-
 export default nextConfig;
