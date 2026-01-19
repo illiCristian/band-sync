@@ -127,7 +127,17 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
 
                 <div className="p-4 sm:p-6 lg:p-8">
                     {/* Compact Container for visualizer on mobile */}
-                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6 relative">
+                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6">
+                        {/* View Mode Indicator - Outside interactive area */}
+                        <div className="flex justify-end gap-1 mb-2">
+                            <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter transition-colors ${viewMode === 'waveform' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                Wave
+                            </div>
+                            <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter transition-colors ${viewMode === 'spectrum' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                Spec
+                            </div>
+                        </div>
+
                         <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 overflow-hidden ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
                             } ${viewMode === 'spectrum' ? 'hidden' : 'block'}`} ref={containerRef} />
 
@@ -137,16 +147,6 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                                 <SpectrumVisualizer analyser={analyser} isPaused={!isPlaying} />
                             </div>
                         )}
-
-                        {/* View Mode Indicator Overlay */}
-                        <div className="absolute top-2 right-2 flex gap-1">
-                            <div className={`p-1 rounded-md text-[8px] font-black uppercase tracking-tighter ${viewMode === 'waveform' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                Wave
-                            </div>
-                            <div className={`p-1 rounded-md text-[8px] font-black uppercase tracking-tighter ${viewMode === 'spectrum' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                Spec
-                            </div>
-                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 max-w-[420px] sm:max-w-none mx-auto">
