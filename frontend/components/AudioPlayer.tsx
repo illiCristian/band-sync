@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Comment } from '@/types';
-import { Play, Pause, ListMusic, Sparkles, Settings2 } from 'lucide-react';
+import { Play, Pause, ListMusic, Sparkles, Settings2, BarChart3, Activity } from 'lucide-react';
+import SpectrumVisualizer from './SpectrumVisualizer';
 
 interface AudioPlayerProps {
     url: string;
@@ -18,12 +19,18 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
     const [currentTime, setCurrentTime] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [animationsEnabled, setAnimationsEnabled] = useState(true);
+    const [viewMode, setViewMode] = useState<'waveform' | 'spectrum'>('waveform');
+    const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
 
     useEffect(() => {
         setMounted(true);
-        const saved = localStorage.getItem('playerAnimations');
-        if (saved !== null) {
-            setAnimationsEnabled(saved === 'true');
+        const savedAnims = localStorage.getItem('playerAnimations');
+        if (savedAnims !== null) {
+            setAnimationsEnabled(savedAnims === 'true');
+        }
+        const savedView = localStorage.getItem('playerViewMode') as 'waveform' | 'spectrum';
+        if (savedView) {
+            setViewMode(savedView);
         }
     }, []);
 
@@ -31,6 +38,12 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
         const newValue = !animationsEnabled;
         setAnimationsEnabled(newValue);
         localStorage.setItem('playerAnimations', String(newValue));
+    };
+
+    const toggleViewMode = () => {
+        const newMode = viewMode === 'waveform' ? 'spectrum' : 'waveform';
+        setViewMode(newMode);
+        localStorage.setItem('playerViewMode', newMode);
     };
 
     useEffect(() => {
@@ -49,6 +62,30 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
         });
 
         wavesurfer.current.load(url);
+
+        // Web Audio integration for visualizer
+        const handlePlay = () => {
+            if (wavesurfer.current && !analyser) {
+                const media = wavesurfer.current.getMediaElement();
+                if (media) {
+                    try {
+                        const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                        const audioContext = new AudioContext();
+                        const newAnalyser = audioContext.createAnalyser();
+                        newAnalyser.fftSize = 256;
+
+                        const source = audioContext.createMediaElementSource(media);
+                        source.connect(newAnalyser);
+                        newAnalyser.connect(audioContext.destination);
+                        setAnalyser(newAnalyser);
+                    } catch (e) {
+                        console.error("Failed to initialize audio analyser:", e);
+                    }
+                }
+            }
+        };
+
+        wavesurfer.current.on('play', handlePlay);
 
         wavesurfer.current.on('timeupdate', (time) => {
             setCurrentTime(time);
@@ -89,10 +126,27 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                 )}
 
                 <div className="p-4 sm:p-6 lg:p-8">
-                    {/* Compact Container for waveform on mobile */}
-                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6">
-                        <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
-                            }`} ref={containerRef} />
+                    {/* Compact Container for visualizer on mobile */}
+                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6 relative">
+                        <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 overflow-hidden ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
+                            } ${viewMode === 'spectrum' ? 'hidden' : 'block'}`} ref={containerRef} />
+
+                        {viewMode === 'spectrum' && (
+                            <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
+                                }`}>
+                                <SpectrumVisualizer analyser={analyser} isPaused={!isPlaying} />
+                            </div>
+                        )}
+
+                        {/* View Mode Indicator Overlay */}
+                        <div className="absolute top-2 right-2 flex gap-1">
+                            <div className={`p-1 rounded-md text-[8px] font-black uppercase tracking-tighter ${viewMode === 'waveform' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                Wave
+                            </div>
+                            <div className={`p-1 rounded-md text-[8px] font-black uppercase tracking-tighter ${viewMode === 'spectrum' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                                Spec
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 max-w-[420px] sm:max-w-none mx-auto">
@@ -133,6 +187,15 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                                 <ListMusic size={18} />
                                 <span className="text-sm font-bold">{comments.length} notas</span>
                             </div>
+
+                            {/* Visualization Mode Toggle */}
+                            <button
+                                onClick={toggleViewMode}
+                                title={viewMode === 'waveform' ? "Ver Espectro" : "Ver Forma de Onda"}
+                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 bg-muted border-border hover:border-primary/50 hover:text-primary`}
+                            >
+                                {viewMode === 'waveform' ? <BarChart3 size={16} /> : <Activity size={16} />}
+                            </button>
 
                             {/* Animation Toggle */}
                             <button
