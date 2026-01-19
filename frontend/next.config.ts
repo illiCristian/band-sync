@@ -3,14 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   async rewrites() {
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:3001/api/:path*', // Proxy to Backend
+        destination: `${backendUrl}/:path*`, // Proxy to Backend
       },
       {
         source: '/uploads/:path*',
-        destination: 'http://localhost:3001/uploads/:path*', // Proxy to Uploads
+        destination: `${backendUrl}/uploads/:path*`, // Proxy to Uploads
       },
     ];
   },

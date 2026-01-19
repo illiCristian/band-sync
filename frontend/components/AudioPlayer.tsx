@@ -21,6 +21,7 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
     const [animationsEnabled, setAnimationsEnabled] = useState(true);
     const [viewMode, setViewMode] = useState<'waveform' | 'spectrum'>('waveform');
     const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -65,12 +66,14 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
 
         // Web Audio integration for visualizer
         const handlePlay = () => {
-            if (wavesurfer.current && !analyser) {
+            if (wavesurfer.current && !analyser && !audioContextRef.current) {
                 const media = wavesurfer.current.getMediaElement();
                 if (media) {
                     try {
                         const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
                         const audioContext = new AudioContext();
+                        audioContextRef.current = audioContext;
+
                         const newAnalyser = audioContext.createAnalyser();
                         newAnalyser.fftSize = 256;
 
@@ -128,16 +131,6 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                 <div className="p-4 sm:p-6 lg:p-8">
                     {/* Compact Container for visualizer on mobile */}
                     <div className="max-w-[420px] sm:max-w-none mx-auto mb-6">
-                        {/* View Mode Indicator - Outside interactive area */}
-                        <div className="flex justify-end gap-1 mb-2">
-                            <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter transition-colors ${viewMode === 'waveform' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                Wave
-                            </div>
-                            <div className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter transition-colors ${viewMode === 'spectrum' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                                Spec
-                            </div>
-                        </div>
-
                         <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 overflow-hidden ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
                             } ${viewMode === 'spectrum' ? 'hidden' : 'block'}`} ref={containerRef} />
 
@@ -192,7 +185,10 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                             <button
                                 onClick={toggleViewMode}
                                 title={viewMode === 'waveform' ? "Ver Espectro" : "Ver Forma de Onda"}
-                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 bg-muted border-border hover:border-primary/50 hover:text-primary`}
+                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 ${viewMode === 'spectrum'
+                                        ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
+                                        : 'bg-muted border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
+                                    }`}
                             >
                                 {viewMode === 'waveform' ? <BarChart3 size={16} /> : <Activity size={16} />}
                             </button>
