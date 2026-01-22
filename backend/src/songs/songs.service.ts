@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
 
 @Injectable()
 export class SongsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(createSongDto: CreateSongDto) {
     // Ensure a band exists. For MVP, we use the provided bandId or the first one found.
@@ -42,16 +42,21 @@ export class SongsService {
   }
 
   async findAll() {
-    return this.prisma.song.findMany({
-      include: {
-        band: true,
-        recordings: {
-          include: {
-            comments: true,
+    try {
+      return await this.prisma.song.findMany({
+        include: {
+          band: true,
+          recordings: {
+            include: {
+              comments: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      console.error('FindAll Error:', e);
+      throw new InternalServerErrorException('DB Error: ' + e.message);
+    }
   }
 
   async findOne(id: string) {
