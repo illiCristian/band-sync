@@ -11,18 +11,29 @@ async function getSongs(): Promise<Song[]> {
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000';
 
-    const res = await fetch(`${baseUrl}/api/songs`, {
+    const fetchUrl = `${baseUrl}/api/songs`;
+    console.log('[SERVER] Fetching songs from:', fetchUrl);
+    console.log('[SERVER] VERCEL_URL:', process.env.VERCEL_URL);
+
+    const res = await fetch(fetchUrl, {
       next: { revalidate: 60 },
       cache: 'no-store' // Ensure fresh data
     });
 
+    console.log('[SERVER] Response status:', res.status);
+
     if (!res.ok) {
-      console.error("Backend fetch failed with status:", res.status);
+      console.error("[SERVER] Backend fetch failed with status:", res.status);
+      const text = await res.text();
+      console.error("[SERVER] Response body:", text);
       return [];
     }
-    return res.json();
+
+    const data = await res.json();
+    console.log('[SERVER] Fetched songs count:', data.length);
+    return data;
   } catch (err) {
-    console.error("Failed to fetch songs on server:", err);
+    console.error("[SERVER] Failed to fetch songs on server:", err);
     return [];
   }
 }
