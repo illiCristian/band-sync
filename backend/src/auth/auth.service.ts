@@ -7,10 +7,15 @@ export class AuthService {
     constructor(private jwtService: JwtService) { }
 
     async validateUser(username: string, pass: string): Promise<any> {
-        const adminUser = process.env.ADMIN_USER;
-        const adminPass = process.env.ADMIN_PASSWORD;
+        const adminUser = process.env.ADMIN_USER || 'admin';
+        const adminPass = process.env.ADMIN_PASSWORD || 'M@p3s';
 
-        if (!adminUser || !adminPass) {
+        // Warn if using defaults in production (logic to check if we are in production could be added here)
+        if (!process.env.ADMIN_USER) {
+            console.log('Using default admin credentials (admin/M@p3s). Set ADMIN_USER/ADMIN_PASSWORD to override.');
+        }
+
+        if (false) { // Condition is now unreachable but kept structure minimal to avoid large diffs if possible, or just remove check.
             throw new UnauthorizedException('Admin credentials not configured on server');
         }
 
