@@ -42,16 +42,21 @@ export class SongsService {
   }
 
   async findAll() {
-    return this.prisma.song.findMany({
-      include: {
-        band: true,
-        recordings: {
-          include: {
-            comments: true,
+    try {
+      return await this.prisma.song.findMany({
+        include: {
+          band: true,
+          recordings: {
+            include: {
+              comments: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (e) {
+      console.error('FindAll Error Details:', JSON.stringify(e, null, 2));
+      throw e;
+    }
   }
 
   async findOne(id: string) {
