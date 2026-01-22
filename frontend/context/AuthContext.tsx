@@ -26,9 +26,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            setIsAuthenticated(true);
+            // Verify token with backend
+            fetch('/api/auth/verify', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+                .then(res => {
+                    if (res.ok) {
+                        setIsAuthenticated(true);
+                    } else {
+                        // Token is invalid/expired
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('username');
+                        setIsAuthenticated(false);
+                    }
+                })
+                .catch(() => {
+                    // Network error or backend down, better to be safe
+                    setIsAuthenticated(false);
+                })
+                .finally(() => setLoading(false));
+        } else {
+            setLoading(false);
         }
-        setLoading(false);
     }, []);
 
     const login = (token: string, username: string) => {

@@ -21,22 +21,19 @@
 
   --muted: #f8fafc;
   /* Slate 50 */
-  --muted-foreground: #64748b;
-  /* Slate 500 - Readable metadata */
-
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
-
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-
-  --border: #e2e8f0;
-  /* Slate 200 - Subtle borders */
-  --input: #e2e8f0;
-  --ring: #6366f1;
-  /* Focus ring matches primary */
+  --muted-foreground: #475569;
+  /* Slate 600 - Better contrast than 500 */
+  --secondary-foreground: #020617;
+  /* Slate 950 - Stronger text */
 
   --radius: 0.75rem;
+
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+  }
 
   color-scheme: light;
 }

@@ -10,6 +10,9 @@ interface HomeClientProps {
     initialSongs: Song[];
 }
 
+import EmptyState from '@/components/EmptyState';
+import Link from 'next/link';
+
 export default function HomeClient({ initialSongs }: HomeClientProps) {
     const [songs] = useState<Song[]>(initialSongs);
 
@@ -47,15 +50,19 @@ export default function HomeClient({ initialSongs }: HomeClientProps) {
                             <SongAccordion key={song.id} song={song} />
                         ))
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-border rounded-3xl bg-muted/30">
-                            <div className="p-4 bg-secondary rounded-full text-muted-foreground mb-4 animate-bounce">
-                                <Layers size={40} />
-                            </div>
-                            <h3 className="text-xl font-bold text-foreground mb-2">Tu repertorio está vacío</h3>
-                            <p className="text-muted-foreground max-w-sm text-center">
-                                No se encontraron canciones activas. Pídele al administrador que suba el primer material.
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon={Layers}
+                            title="Tu repertorio está vacío"
+                            description="No se encontraron canciones activas en el sistema."
+                            action={
+                                <Link
+                                    href="/admin"
+                                    className="px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:bg-primary/90 transition-all"
+                                >
+                                    Gestionar Catálogo
+                                </Link>
+                            }
+                        />
                     )}
                 </section>
             </main>

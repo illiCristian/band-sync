@@ -7,11 +7,12 @@ import RecordingUploadForm from "./RecordingUploadForm";
 import FormattedDate from "./FormattedDate";
 import CommentSection from "./CommentSection";
 import ConfirmModal from "./ConfirmModal";
+import EmptyState from "./EmptyState";
 
 interface SongListProps {
     songs: Song[];
     onUpdate: (id: string, data: Partial<Song>) => Promise<void>;
-    onDelete: (id: string) => Promise<void>;
+    onDelete: (id: string, title: string) => void; // Matches AdminPage handleDeleteClick
     onAddRecording: (songId: string, data: any) => Promise<void>;
     onUpdateRecording: (id: string, data: any) => Promise<void>;
     onDeleteRecording: (id: string) => Promise<void>;
@@ -26,8 +27,10 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
     const [editingRecordingId, setEditingRecordingId] = useState<string | null>(null);
     const [editRecordingData, setEditRecordingData] = useState<any>({});
     const [expandedCommentsId, setExpandedCommentsId] = useState<string | null>(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deleteConfig, setDeleteConfig] = useState<{ id: string, type: 'SONG' | 'RECORDING', title: string } | null>(null);
+
+    // Recording-specific delete modal state (Song delete is handled by parent AdminPage)
+    const [isRecDeleteModalOpen, setIsRecDeleteModalOpen] = useState(false);
+    const [recToDelete, setRecToDelete] = useState<{ id: string, name: string } | null>(null);
 
     const startEdit = (song: Song) => {
         setEditingId(song.id);
@@ -63,33 +66,21 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
         }
     };
 
-    const confirmDelete = (id: string, type: 'SONG' | 'RECORDING', title: string) => {
-        setDeleteConfig({ id, type, title });
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleDelete = async () => {
-        if (!deleteConfig) return;
-
-        if (deleteConfig.type === 'SONG') {
-            await onDelete(deleteConfig.id);
-        } else {
-            await onDeleteRecording(deleteConfig.id);
-        }
-        setIsDeleteModalOpen(false);
-        setDeleteConfig(null);
+    const handleConfirmRecDelete = async () => {
+        if (!recToDelete) return;
+        await onDeleteRecording(recToDelete.id);
+        setIsRecDeleteModalOpen(false);
+        setRecToDelete(null);
     };
 
     return (
         <div className="grid grid-cols-1 gap-6">
             {songs.length === 0 && (
-                <div className="text-center py-16 px-6 bg-card rounded-3xl border border-border flex flex-col items-center">
-                    <div className="p-4 bg-primary/10 text-primary rounded-full mb-4">
-                        <Music size={32} />
-                    </div>
-                    <h3 className="text-lg font-black text-card-foreground mb-2">Comienza tu Catálogo</h3>
-                    <p className="text-muted-foreground max-w-xs mx-auto mb-6">Añade tu primera canción usando el formulario de arriba.</p>
-                </div>
+                <EmptyState
+                    icon={Music}
+                    title="Comienza tu Catálogo"
+                    description="Añade tu primera canción usando el formulario de arriba para empezar a organizar tu música."
+                />
             )}
             {songs.map((song) => (
                 <div key={song.id} className="group bg-card rounded-2xl border border-border shadow-sm hover:shadow-xl transition-all overflow-hidden">
@@ -151,7 +142,7 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
                                     <button onClick={() => startEdit(song)} aria-label="Editar canción" className="p-3 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center">
                                         <Edit2 size={20} />
                                     </button>
-                                    <button onClick={() => confirmDelete(song.id, 'SONG', song.title)} aria-label="Eliminar canción" className="p-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center">
+                                    <button onClick={() => onDelete(song.id, song.title)} aria-label="Eliminar canción" className="p-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all min-w-[44px] min-h-[44px] flex items-center justify-center">
                                         <Trash2 size={20} />
                                     </button>
                                 </div>
@@ -164,8 +155,8 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
                         <div className="border-t border-border bg-muted/30 p-4 space-y-2">
                             <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest px-2 mb-2">Versiones</h4>
                             {song.recordings.map((rec: any) => (
-                                <div className="border-t border-border mt-2 pt-2">
-                                    <div key={rec.id} className="flex flex-col gap-2 p-3 bg-card rounded-xl border border-border">
+                                <div key={rec.id} className="border-t border-border mt-2 pt-2">
+                                    <div className="flex flex-col gap-2 p-3 bg-card rounded-xl border border-border">
                                         <div className="flex items-center justify-between">
                                             {editingRecordingId === rec.id ? (
                                                 <form onSubmit={submitEditRecording} className="flex-1 flex gap-2 items-center">
@@ -213,7 +204,7 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
                                                         <button onClick={() => startEditRecording(rec)} aria-label="Editar grabación" className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all">
                                                             <Edit2 size={16} />
                                                         </button>
-                                                        <button onClick={() => confirmDelete(rec.id, 'RECORDING', rec.versionName)} aria-label="Eliminar grabación" className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all">
+                                                        <button onClick={() => { setRecToDelete({ id: rec.id, name: rec.versionName }); setIsRecDeleteModalOpen(true); }} aria-label="Eliminar grabación" className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all">
                                                             <Trash2 size={16} />
                                                         </button>
                                                     </div>
@@ -241,9 +232,9 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
                         <div className="p-6 border-t border-border bg-muted/20">
                             <RecordingUploadForm
                                 songId={song.id}
-                                onUpload={async (data) => {
-                                    await onAddRecording(song.id, data);
+                                onUpload={async () => {
                                     setUploadingToId(null);
+                                    if (onRefresh) onRefresh();
                                 }}
                                 onCancel={() => setUploadingToId(null)}
                             />
@@ -253,15 +244,14 @@ export default function SongList({ songs, onUpdate, onDelete, onAddRecording, on
             ))}
 
             <ConfirmModal
-                isOpen={isDeleteModalOpen}
-                title={deleteConfig?.type === 'SONG' ? "¿Eliminar canción?" : "¿Eliminar grabación?"}
-                message={`¿Estás seguro de que quieres eliminar "${deleteConfig?.title}"? Esta acción no se puede deshacer.`}
+                isOpen={isRecDeleteModalOpen}
+                title="¿Eliminar grabación?"
+                message={`¿Estás seguro de que quieres eliminar "${recToDelete?.name}"? Esta acción no se puede deshacer.`}
                 confirmText="Eliminar"
-                onConfirm={handleDelete}
-                onCancel={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmRecDelete}
+                onCancel={() => { setIsRecDeleteModalOpen(false); setRecToDelete(null); }}
                 variant="danger"
             />
         </div>
     );
 }
-

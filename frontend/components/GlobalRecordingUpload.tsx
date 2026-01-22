@@ -23,6 +23,7 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
     const [isFinal, setIsFinal] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     // Trimming Fields
     const [isTrimming, setIsTrimming] = useState(false);
@@ -48,10 +49,12 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
         if (!file) return;
 
         setIsUploading(true);
+        setUploadProgress(0);
+
         try {
             let finalFile = file;
 
-            // Trim Logic
+            // Trim Logic if applicable
             if (isTrimming) {
                 const start = parseTimeToSeconds(trimStart);
                 const end = parseTimeToSeconds(trimEnd);
@@ -61,10 +64,9 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
             }
 
             let targetSongId = selectedSongId;
-
-            // 1. If creating a new song, create it first
             const token = localStorage.getItem('token');
 
+            // 1. If creating a new song, create it first
             if (mode === 'NEW') {
                 const songRes = await fetch("/api/songs", {
                     method: "POST",
@@ -81,7 +83,7 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
 
             if (!targetSongId) throw new Error("Ninguna canción seleccionada");
 
-            // 2. Upload the recording
+            // 2. Upload the recording with progress tracking
             const formData = new FormData();
             formData.append('songId', targetSongId);
             formData.append('versionName', versionName || "Toma 1");
@@ -89,15 +91,29 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
             formData.append('isFinal', String(isFinal));
             formData.append('file', finalFile);
 
-            const res = await fetch("/api/recordings/upload", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                },
-                body: formData,
-            });
+            await new Promise<void>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/recordings/upload');
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
-            if (!res.ok) throw new Error("Error en la subida");
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setUploadProgress(percent);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.send(formData);
+            });
 
             onUploadComplete();
         } catch (error) {
@@ -105,6 +121,7 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
             alert("Error: " + (error as any).message);
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -300,13 +317,19 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
                             <button
                                 type="submit"
                                 disabled={!file || isUploading || (mode === 'EXISTING' && !selectedSongId) || (mode === 'NEW' && !newSongTitle)}
-                                className={`px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl shadow-xl shadow-primary/25 transition-all flex items-center gap-2 ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:scale-105 active:scale-95'
+                                className={`relative px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl shadow-xl shadow-primary/25 transition-all flex items-center justify-center gap-2 overflow-hidden ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:scale-105 active:scale-95'
                                     }`}
                             >
                                 {isUploading ? (
                                     <>
-                                        <Clock size={18} className="animate-spin" />
-                                        Subiendo{isTrimming ? ' y procesando...' : '...'}
+                                        <div
+                                            className="absolute inset-0 bg-primary-foreground/20 transition-all duration-300 ease-out"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        />
+                                        <div className="relative z-10 flex items-center gap-2">
+                                            <Clock size={14} className="animate-spin" />
+                                            <span className="text-sm uppercase tracking-tighter">Subiendo... {uploadProgress}%</span>
+                                        </div>
                                     </>
                                 ) : (
                                     <>

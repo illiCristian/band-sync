@@ -10,10 +10,14 @@ import GlobalRecordingUpload from "@/components/GlobalRecordingUpload";
 import NavBar from "@/components/NavBar";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import Skeleton from "@/components/Skeleton";
+import ConfirmModal from "@/components/ConfirmModal";
 
 export default function AdminPage() {
     const [songs, setSongs] = useState<Song[]>([]);
     const [isGlobalUploadOpen, setIsGlobalUploadOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [songToDelete, setSongToDelete] = useState<{ id: string, title: string } | null>(null);
     const { isAuthenticated, loading } = useAuth();
     const router = useRouter();
 
@@ -50,7 +54,7 @@ export default function AdminPage() {
         const songData = { ...song, bandId: 'placeholder-band-id' };
         const token = localStorage.getItem('token');
         try {
-            await fetch("/api/songs", {
+            const res = await fetch("/api/songs", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -58,6 +62,7 @@ export default function AdminPage() {
                 },
                 body: JSON.stringify(songData),
             });
+            if (!res.ok) throw new Error("Error creating song");
             fetchSongs();
             toast.success("Canción creada exitosamente");
         } catch (error) {
@@ -68,7 +73,7 @@ export default function AdminPage() {
     const handleUpdate = async (id: string, song: Partial<Song>) => {
         const token = localStorage.getItem('token');
         try {
-            await fetch(`/api/songs/${id}`, {
+            const res = await fetch(`/api/songs/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -76,6 +81,7 @@ export default function AdminPage() {
                 },
                 body: JSON.stringify(song),
             });
+            if (!res.ok) throw new Error("Error updating song");
             fetchSongs();
             toast.success("Canción actualizada");
         } catch (error) {
@@ -83,28 +89,40 @@ export default function AdminPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (confirm("Are you sure you want to delete this song and all its recordings?")) {
-            const token = localStorage.getItem('token');
-            try {
-                await fetch(`/api/songs/${id}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
+    const handleDeleteClick = (id: string, title: string) => {
+        setSongToDelete({ id, title });
+        setIsDeleteModalOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!songToDelete) return;
+
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`/api/songs/${songToDelete.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            if (res.ok) {
                 fetchSongs();
                 toast.success("Canción eliminada");
-            } catch (error) {
+            } else {
                 toast.error("Error al eliminar");
             }
+        } catch (error) {
+            toast.error("Error al eliminar");
+        } finally {
+            setIsDeleteModalOpen(false);
+            setSongToDelete(null);
         }
     };
 
     const handleAddRecording = async (songId: string, data: any) => {
         console.log("Uploading recording to cloud...", data);
 
-        // In a real scenario, we would use FormData
         const formData = new FormData();
         formData.append('songId', songId);
         formData.append('versionName', data.versionName);
@@ -137,7 +155,7 @@ export default function AdminPage() {
     const handleUpdateRecording = async (id: string, data: any) => {
         const token = localStorage.getItem('token');
         try {
-            await fetch(`/api/recordings/${id}`, {
+            const res = await fetch(`/api/recordings/${id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -145,6 +163,7 @@ export default function AdminPage() {
                 },
                 body: JSON.stringify(data),
             });
+            if (!res.ok) throw new Error("Error updating recording");
             fetchSongs();
             toast.success("Versión actualizada");
         } catch (error) {
@@ -153,24 +172,46 @@ export default function AdminPage() {
     };
 
     const handleDeleteRecording = async (id: string) => {
-        if (confirm("¿Estás seguro de que quieres eliminar esta versión?")) {
-            const token = localStorage.getItem('token');
-            try {
-                await fetch(`/api/recordings/${id}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-                fetchSongs();
-                toast.success("Versión eliminada");
-            } catch (error) {
-                toast.error("Error al eliminar la versión");
-            }
+        const token = localStorage.getItem('token');
+        try {
+            const res = await fetch(`/api/recordings/${id}`, {
+                method: "DELETE",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            if (!res.ok) throw new Error("Error deleting recording");
+            fetchSongs();
+            toast.success("Versión eliminada");
+        } catch (error) {
+            toast.error("Error al eliminar la versión");
         }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Cargando...</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-transparent">
+                <NavBar />
+                <main className="max-w-6xl mx-auto px-6 py-12">
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="flex justify-between items-center">
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-10 w-64" />
+                            </div>
+                            <Skeleton className="h-12 w-40 rounded-xl" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <Skeleton className="h-24 w-full rounded-2xl" />
+                            <Skeleton className="h-24 w-full rounded-2xl" />
+                        </div>
+                        <Skeleton className="h-[400px] w-full rounded-3xl" />
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     if (!isAuthenticated) return null;
 
     return (
@@ -204,7 +245,7 @@ export default function AdminPage() {
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase">Canciones</p>
-                                <p className="text-xl font-black text-card-foreground">{songs.length}</p>
+                                <p className="text-xl font-black text-card-foreground">{totalSongs}</p>
                             </div>
                         </div>
                         <div className="bg-card p-4 rounded-2xl shadow-sm border border-border flex items-center gap-3">
@@ -235,7 +276,7 @@ export default function AdminPage() {
                         <SongList
                             songs={songs}
                             onUpdate={handleUpdate}
-                            onDelete={handleDelete}
+                            onDelete={handleDeleteClick}
                             onAddRecording={handleAddRecording}
                             onUpdateRecording={handleUpdateRecording}
                             onDeleteRecording={handleDeleteRecording}
@@ -255,6 +296,16 @@ export default function AdminPage() {
                     onCancel={() => setIsGlobalUploadOpen(false)}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                title="¿Eliminar canción?"
+                message={`¿Estás seguro de que quieres eliminar "${songToDelete?.title}"? Esta acción borrará permanentemente la canción y todas sus grabaciones.`}
+                confirmText="Eliminar permanentemente"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setIsDeleteModalOpen(false)}
+                variant="danger"
+            />
         </div>
     );
 }

@@ -18,6 +18,7 @@ export default function RecordingUploadForm({ songId, onUpload, onCancel }: Reco
     const [isFinal, setIsFinal] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     // Trimming Fields
     const [isTrimming, setIsTrimming] = useState(false);
@@ -42,10 +43,11 @@ export default function RecordingUploadForm({ songId, onUpload, onCancel }: Reco
         if (!file) return;
 
         setIsUploading(true);
+        setUploadProgress(0);
 
         let finalFile = file;
         try {
-            // Trim Logic
+            // Trim Logic if applicable
             if (isTrimming) {
                 const start = parseTimeToSeconds(trimStart);
                 const end = parseTimeToSeconds(trimEnd);
@@ -54,23 +56,47 @@ export default function RecordingUploadForm({ songId, onUpload, onCancel }: Reco
                 }
             }
 
-            // In a real app, we'd use FormData to send the file
-            // For now, we simulate the structure
-            const data = {
-                songId,
-                versionName: versionName || "Toma 1",
-                category,
-                isFinal,
-                type: finalFile.type,
-                file: finalFile, // The actual file
-            };
+            const formData = new FormData();
+            formData.append('songId', songId);
+            formData.append('versionName', versionName || "Nueva Toma");
+            formData.append('category', category);
+            formData.append('isFinal', String(isFinal));
+            formData.append('file', finalFile);
 
-            await onUpload(data);
+            const token = localStorage.getItem('token');
+
+            // Using XHR for progress tracking
+            await new Promise<void>((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/recordings/upload');
+                xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setUploadProgress(percent);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error during upload'));
+                xhr.send(formData);
+            });
+
+            await onUpload({ success: true }); // Notify parent to refresh
         } catch (error) {
             console.error("Error al procesar/subir", error);
             alert("Error: " + (error as any).message);
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
         }
     };
 
@@ -219,13 +245,19 @@ export default function RecordingUploadForm({ songId, onUpload, onCancel }: Reco
                         <button
                             type="submit"
                             disabled={!file || isUploading}
-                            className={`px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center gap-2 ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]'
+                            className={`relative px-8 py-3 bg-primary text-primary-foreground font-black rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 overflow-hidden ${(!file || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]'
                                 }`}
                         >
                             {isUploading ? (
                                 <>
-                                    <Clock size={18} className="animate-spin" />
-                                    Procesando...
+                                    <div
+                                        className="absolute inset-0 bg-primary-foreground/20 transition-all duration-300 ease-out"
+                                        style={{ width: `${uploadProgress}%` }}
+                                    />
+                                    <div className="relative z-10 flex items-center gap-2">
+                                        <Clock size={18} className="animate-spin" />
+                                        <span>Subiendo... {uploadProgress}%</span>
+                                    </div>
                                 </>
                             ) : (
                                 'Subir a la Nube'
