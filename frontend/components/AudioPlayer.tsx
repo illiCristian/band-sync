@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { Comment } from '@/types';
-import { Play, Pause, ListMusic, Sparkles, Settings2, BarChart3, Activity } from 'lucide-react';
+import { Play, Pause, ListMusic, Sparkles, Settings2, BarChart3, Activity, RotateCcw, RotateCw, Orbit } from 'lucide-react';
 import SpectrumVisualizer from './SpectrumVisualizer';
+import RadialVisualizer from './RadialVisualizer';
+import { useAudioPlayback } from '@/context/AudioPlaybackContext';
 
 interface AudioPlayerProps {
     url: string;
@@ -19,7 +21,8 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
     const [currentTime, setCurrentTime] = useState(0);
     const [mounted, setMounted] = useState(false);
     const [animationsEnabled, setAnimationsEnabled] = useState(true);
-    const [viewMode, setViewMode] = useState<'waveform' | 'spectrum'>('waveform');
+    const [viewMode, setViewMode] = useState<'waveform' | 'spectrum' | 'radial'>('waveform');
+    const { activeAudioId, playAudio } = useAudioPlayback();
     const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -42,10 +45,22 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
     };
 
     const toggleViewMode = () => {
-        const newMode = viewMode === 'waveform' ? 'spectrum' : 'waveform';
+        let newMode: 'waveform' | 'spectrum' | 'radial';
+        if (viewMode === 'waveform') newMode = 'spectrum';
+        else if (viewMode === 'spectrum') newMode = 'radial';
+        else newMode = 'waveform';
+
         setViewMode(newMode);
         localStorage.setItem('playerViewMode', newMode);
     };
+
+    // Global playback logic
+    useEffect(() => {
+        if (activeAudioId && activeAudioId !== url && isPlaying) {
+            wavesurfer.current?.pause();
+            setIsPlaying(false);
+        }
+    }, [activeAudioId, url, isPlaying]);
 
     useEffect(() => {
         if (!containerRef.current || !mounted) return;
@@ -106,8 +121,18 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
 
     const togglePlayPause = () => {
         if (wavesurfer.current) {
+            if (!isPlaying) {
+                playAudio(url);
+            }
             wavesurfer.current.playPause();
             setIsPlaying(!isPlaying);
+        }
+    };
+
+    const seekRelative = (seconds: number) => {
+        if (wavesurfer.current) {
+            const currentTime = wavesurfer.current.getCurrentTime();
+            wavesurfer.current.setTime(currentTime + seconds);
         }
     };
 
@@ -130,9 +155,9 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
 
                 <div className="p-4 sm:p-6 lg:p-8">
                     {/* Compact Container for visualizer on mobile */}
-                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6">
+                    <div className="max-w-[420px] sm:max-w-none mx-auto mb-6 relative group">
                         <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 overflow-hidden ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
-                            } ${viewMode === 'spectrum' ? 'hidden' : 'block'}`} ref={containerRef} />
+                            } ${viewMode === 'waveform' ? 'block' : 'hidden'}`} ref={containerRef} />
 
                         {viewMode === 'spectrum' && (
                             <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
@@ -140,6 +165,31 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                                 <SpectrumVisualizer analyser={analyser} isPaused={!isPlaying} />
                             </div>
                         )}
+
+                        {viewMode === 'radial' && (
+                            <div className={`bg-secondary/30 rounded-xl p-3 sm:p-4 transition-all duration-500 ${animationsEnabled && isPlaying ? 'bg-secondary/50 shadow-inner' : ''
+                                }`}>
+                                <RadialVisualizer analyser={analyser} isPaused={!isPlaying} />
+                            </div>
+                        )}
+
+                        {/* Seek Controls Overlay */}
+                        <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); seekRelative(-10); }}
+                                className="p-3 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm pointer-events-auto transition-transform hover:scale-110 active:scale-90"
+                                title="Retroceder 10s"
+                            >
+                                <RotateCcw size={20} />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); seekRelative(10); }}
+                                className="p-3 bg-black/40 hover:bg-black/60 rounded-full text-white backdrop-blur-sm pointer-events-auto transition-transform hover:scale-110 active:scale-90"
+                                title="Adelantar 10s"
+                            >
+                                <RotateCw size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6 max-w-[420px] sm:max-w-none mx-auto">
@@ -184,13 +234,13 @@ export default function AudioPlayer({ url, comments, onTimeUpdate }: AudioPlayer
                             {/* Visualization Mode Toggle */}
                             <button
                                 onClick={toggleViewMode}
-                                title={viewMode === 'waveform' ? "Ver Espectro" : "Ver Forma de Onda"}
-                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 ${viewMode === 'spectrum'
-                                        ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
-                                        : 'bg-muted border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
+                                title={viewMode === 'waveform' ? "Ver Espectro" : viewMode === 'spectrum' ? "Ver Radial" : "Ver Forma de Onda"}
+                                className={`p-2 rounded-xl border flex items-center gap-2 transition-all active:scale-90 ${viewMode !== 'waveform'
+                                    ? 'bg-primary/10 border-primary/30 text-primary shadow-sm'
+                                    : 'bg-muted border-border text-muted-foreground hover:border-primary/50 hover:text-primary'
                                     }`}
                             >
-                                {viewMode === 'waveform' ? <BarChart3 size={16} /> : <Activity size={16} />}
+                                {viewMode === 'waveform' ? <Activity size={16} /> : viewMode === 'spectrum' ? <BarChart3 size={16} /> : <Orbit size={16} />}
                             </button>
 
                             {/* Animation Toggle */}

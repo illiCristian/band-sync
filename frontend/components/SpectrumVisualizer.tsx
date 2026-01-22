@@ -38,34 +38,32 @@ export default function SpectrumVisualizer({ analyser, isPaused }: SpectrumVisua
 
             ctx.clearRect(0, 0, width, height);
 
-            const barCount = 32;
-            const barWidth = (width / barCount) - 2;
+            const barCount = 48; // More bars for smoother look
+            const barWidth = (width / barCount);
             let x = 0;
 
-            // Retro block style
-            const blockHeight = 4;
-            const blockGap = 2;
-
             for (let i = 0; i < barCount; i++) {
-                // Map frequency data to limited bar count
                 const index = Math.floor(i * (bufferLength / barCount / 2));
-                let barHeight = (dataArray[index] / 255) * height;
+                const targetBarHeight = (dataArray[index] / 255) * height;
 
-                // Round to nearest block
-                barHeight = Math.floor(barHeight / (blockHeight + blockGap)) * (blockHeight + blockGap);
+                // Smoother rainbow effect with time-based shifting
+                const hue = (i * (360 / barCount)) + (Date.now() / 100) % 360;
 
-                const colorStep = 360 / barCount;
-                const hue = i * colorStep;
+                const gradient = ctx.createLinearGradient(0, height, 0, height - targetBarHeight);
+                gradient.addColorStop(0, `hsla(${hue}, 80%, 50%, 0.8)`);
+                gradient.addColorStop(1, `hsla(${hue}, 80%, 50%, 0.2)`);
 
-                // For rainbow effect similar to the requested image
-                ctx.fillStyle = `hsl(${hue}, 80%, 50%)`;
+                ctx.fillStyle = gradient;
 
-                // Draw blocks
-                for (let y = height; y > height - barHeight; y -= (blockHeight + blockGap)) {
-                    ctx.fillRect(x, y - blockHeight, barWidth, blockHeight);
-                }
+                // Draw smooth rounded bars
+                const finalHeight = targetBarHeight;
+                const radius = 2;
 
-                x += barWidth + 2;
+                ctx.beginPath();
+                ctx.roundRect(x + 1, height - finalHeight, barWidth - 2, finalHeight, [radius, radius, 0, 0]);
+                ctx.fill();
+
+                x += barWidth;
             }
         };
 
