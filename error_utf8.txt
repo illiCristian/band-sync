@@ -1,0 +1,1 @@
+﻿{"message":"DB Error: \nInvalid `prisma.song.findMany()` invocation:\n\n\nThe column `(not available)` does not exist in the current database.","error":"Internal Server Error","statusCode":500}

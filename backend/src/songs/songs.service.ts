@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSongDto } from './dto/create-song.dto';
 import { UpdateSongDto } from './dto/update-song.dto';
@@ -42,21 +42,16 @@ export class SongsService {
   }
 
   async findAll() {
-    try {
-      return await this.prisma.song.findMany({
-        include: {
-          band: true,
-          recordings: {
-            include: {
-              comments: true,
-            },
+    return this.prisma.song.findMany({
+      include: {
+        band: true,
+        recordings: {
+          include: {
+            comments: true,
           },
         },
-      });
-    } catch (e) {
-      console.error('FindAll Error:', e);
-      throw new InternalServerErrorException('DB Error: ' + e.message);
-    }
+      },
+    });
   }
 
   async findOne(id: string) {
