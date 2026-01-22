@@ -8,10 +8,20 @@ import { LayoutDashboard, Music, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import GlobalRecordingUpload from "@/components/GlobalRecordingUpload";
 import NavBar from "@/components/NavBar";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function AdminPage() {
     const [songs, setSongs] = useState<Song[]>([]);
     const [isGlobalUploadOpen, setIsGlobalUploadOpen] = useState(false);
+    const { isAuthenticated, loading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!loading && !isAuthenticated) {
+            router.push('/login');
+        }
+    }, [loading, isAuthenticated, router]);
 
     const fetchSongs = async () => {
         try {
@@ -31,15 +41,21 @@ export default function AdminPage() {
 
 
     useEffect(() => {
-        fetchSongs();
-    }, []);
+        if (isAuthenticated) {
+            fetchSongs();
+        }
+    }, [isAuthenticated]);
 
     const handleCreate = async (song: Partial<Song>) => {
         const songData = { ...song, bandId: 'placeholder-band-id' };
+        const token = localStorage.getItem('token');
         try {
             await fetch("/api/songs", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(songData),
             });
             fetchSongs();
@@ -50,10 +66,14 @@ export default function AdminPage() {
     };
 
     const handleUpdate = async (id: string, song: Partial<Song>) => {
+        const token = localStorage.getItem('token');
         try {
             await fetch(`/api/songs/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(song),
             });
             fetchSongs();
@@ -65,8 +85,14 @@ export default function AdminPage() {
 
     const handleDelete = async (id: string) => {
         if (confirm("Are you sure you want to delete this song and all its recordings?")) {
+            const token = localStorage.getItem('token');
             try {
-                await fetch(`/api/songs/${id}`, { method: "DELETE" });
+                await fetch(`/api/songs/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 fetchSongs();
                 toast.success("Canción eliminada");
             } catch (error) {
@@ -86,9 +112,14 @@ export default function AdminPage() {
         formData.append('isFinal', String(data.isFinal));
         formData.append('file', data.file);
 
+        const token = localStorage.getItem('token');
+
         try {
             const res = await fetch("/api/recordings/upload", {
                 method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
                 body: formData,
             });
 
@@ -104,10 +135,14 @@ export default function AdminPage() {
     };
 
     const handleUpdateRecording = async (id: string, data: any) => {
+        const token = localStorage.getItem('token');
         try {
             await fetch(`/api/recordings/${id}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(data),
             });
             fetchSongs();
@@ -119,8 +154,14 @@ export default function AdminPage() {
 
     const handleDeleteRecording = async (id: string) => {
         if (confirm("¿Estás seguro de que quieres eliminar esta versión?")) {
+            const token = localStorage.getItem('token');
             try {
-                await fetch(`/api/recordings/${id}`, { method: "DELETE" });
+                await fetch(`/api/recordings/${id}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
                 fetchSongs();
                 toast.success("Versión eliminada");
             } catch (error) {
@@ -128,6 +169,9 @@ export default function AdminPage() {
             }
         }
     };
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-black text-white">Cargando...</div>;
+    if (!isAuthenticated) return null;
 
     return (
         <div className="min-h-screen bg-transparent transition-colors">

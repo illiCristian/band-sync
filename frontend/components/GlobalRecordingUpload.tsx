@@ -63,10 +63,15 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
             let targetSongId = selectedSongId;
 
             // 1. If creating a new song, create it first
+            const token = localStorage.getItem('token');
+
             if (mode === 'NEW') {
                 const songRes = await fetch("/api/songs", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
                     body: JSON.stringify({ title: newSongTitle, status: 'IDEA', bandId: 'default' }),
                 });
                 if (!songRes.ok) throw new Error("Error al crear la canción");
@@ -86,6 +91,9 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
 
             const res = await fetch("/api/recordings/upload", {
                 method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                },
                 body: formData,
             });
 

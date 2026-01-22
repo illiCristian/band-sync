@@ -1,4 +1,3 @@
-import { UpdateRecordingDto } from './dto/update-recording.dto';
 import {
     Controller,
     Post,
@@ -9,14 +8,17 @@ import {
     Delete,
     Param,
     Put,
+    UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RecordingsService } from './recordings.service';
 import { CreateRecordingDto } from './dto/create-recording.dto';
+import { UpdateRecordingDto } from './dto/update-recording.dto';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { StorageService } from '../storage/storage.service';
 import * as fs from 'fs';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('recordings')
 export class RecordingsController {
@@ -25,6 +27,7 @@ export class RecordingsController {
         private readonly storageService: StorageService,
     ) { }
 
+    @UseGuards(JwtAuthGuard)
     @Post('upload')
     @UseInterceptors(
         FileInterceptor('file', {
@@ -80,11 +83,13 @@ export class RecordingsController {
         }
     }
 
+    @UseGuards(JwtAuthGuard)
     @Delete(':id')
     async remove(@Param('id') id: string) {
         return this.recordingsService.remove(id);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Put(':id')
     async update(
         @Param('id') id: string,

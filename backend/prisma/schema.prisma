@@ -20,6 +20,10 @@ model Song {
   bandId     String
   band       Band        @relation(fields: [bandId], references: [id])
   recordings Recording[]
+  deletedAt  DateTime?   // Soft Delete support
+
+  @@index([bandId])
+  @@index([status])
 }
 
 enum SongStatus {
@@ -47,6 +51,10 @@ model Recording {
   songId      String
   song        Song              @relation(fields: [songId], references: [id])
   comments    Comment[]
+  deletedAt   DateTime?
+
+  @@index([songId])
+  @@index([isFinal])
 }
 
 model Comment {

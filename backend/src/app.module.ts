@@ -8,6 +8,7 @@ import { SongsModule } from './songs/songs.module';
 import { RecordingsModule } from './recordings/recordings.module';
 import { StorageModule } from './storage/storage.module';
 import { CommentsModule } from './comments/comments.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -17,9 +18,9 @@ import { CommentsModule } from './comments/comments.module';
     }),
     PrismaModule,
     SongsModule,
-    RecordingsModule,
     StorageModule,
     CommentsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

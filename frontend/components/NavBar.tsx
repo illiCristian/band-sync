@@ -6,9 +6,12 @@ import { Mic2, Menu, X } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePathname } from "next/navigation";
 
+import { useAuth } from "@/context/AuthContext";
+
 export default function NavBar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const pathname = usePathname();
+    const { isAuthenticated, logout } = useAuth();
 
     const isActive = (path: string) => pathname === path;
 
@@ -32,14 +35,34 @@ export default function NavBar() {
                     >
                         Inicio
                     </Link>
-                    <Link
-                        href="/admin"
-                        className={`transition-all active:scale-95 px-5 py-2.5 text-sm font-black rounded-full shadow-lg transition-all ${isActive('/admin')
-                            ? 'bg-primary text-primary-foreground shadow-primary/25'
-                            : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'}`}
-                    >
-                        Panel Admin
-                    </Link>
+
+                    {isAuthenticated ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-foreground">Hola, Admin</span>
+                            <Link
+                                href="/admin"
+                                className={`transition-all active:scale-95 px-5 py-2.5 text-sm font-black rounded-full shadow-lg transition-all ${isActive('/admin')
+                                    ? 'bg-primary text-primary-foreground shadow-primary/25'
+                                    : 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'}`}
+                            >
+                                Panel Admin
+                            </Link>
+                            <button
+                                onClick={logout}
+                                className="text-sm font-medium text-red-500 hover:text-red-400 transition-colors"
+                            >
+                                Salir
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="text-sm font-bold text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            Login
+                        </Link>
+                    )}
+
                     <ThemeToggle />
                 </div>
 
