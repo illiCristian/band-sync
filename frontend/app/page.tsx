@@ -5,10 +5,15 @@ export const revalidate = 0; // Desactivar cache para desarrollo y ver datos fre
 
 async function getSongs(): Promise<Song[]> {
   try {
-    // We use the environment variable for the backend URL if available, else local 3001
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
-    const res = await fetch(`${backendUrl}/songs`, {
-      next: { revalidate: 60 }
+    // In server components, we need to use the full URL for fetch
+    // Use VERCEL_URL for production or localhost for development
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+    const res = await fetch(`${baseUrl}/api/songs`, {
+      next: { revalidate: 60 },
+      cache: 'no-store' // Ensure fresh data
     });
 
     if (!res.ok) {
@@ -23,7 +28,12 @@ async function getSongs(): Promise<Song[]> {
 }
 
 export default async function Home() {
-  const songs = await getSongs();
+  const allSongs = await getSongs();
 
-  return <HomeClient initialSongs={songs} />;
+  // Filter to show only "active" songs (not in IDEA status)
+  const activeSongs = allSongs.filter(song =>
+    song.status !== 'IDEA' && song.recordings && song.recordings.length > 0
+  );
+
+  return <HomeClient initialSongs={activeSongs} />;
 }
