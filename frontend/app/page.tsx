@@ -28,12 +28,7 @@ async function getSongs(): Promise<Song[]> {
 }
 
 export default async function Home() {
-  const allSongs = await getSongs();
+  const songs = await getSongs();
 
-  // Filter to show only "active" songs (not in IDEA status)
-  const activeSongs = allSongs.filter(song =>
-    song.status !== 'IDEA' && song.recordings && song.recordings.length > 0
-  );
-
-  return <HomeClient initialSongs={activeSongs} />;
+  return <HomeClient initialSongs={songs} />;
 }
