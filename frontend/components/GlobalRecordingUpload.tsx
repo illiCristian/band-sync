@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Song, RecordingCategory } from "@/types";
 import { Upload, X, CheckCircle2, Clock, Plus, Music } from "lucide-react";
+import { toast } from "sonner";
 
 interface GlobalRecordingUploadProps {
     songs: Song[];
@@ -116,9 +117,18 @@ export default function GlobalRecordingUpload({ songs, onUploadComplete, onCance
             });
 
             onUploadComplete();
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Error: " + (error as any).message);
+            const errorMessage = error.message || "Error desconocido";
+
+            if (errorMessage.includes("404")) {
+                toast.error("Error 404: El servidor de archivos no está disponible.", {
+                    description: "Si el backend está en Render, puede que esté 'despertando'.",
+                    duration: 5000,
+                });
+            } else {
+                toast.error(`Error al subir: ${errorMessage}`);
+            }
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
