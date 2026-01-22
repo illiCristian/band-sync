@@ -5,18 +5,13 @@ export const revalidate = 0; // Desactivar cache para desarrollo y ver datos fre
 
 async function getSongs(): Promise<Song[]> {
   try {
-    // In server components, we need to use the full URL for fetch
-    // Use VERCEL_URL for production or localhost for development
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
+    // In server components, fetch directly from backend to avoid Vercel auth issues
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const fetchUrl = `${backendUrl}/api/songs`;
 
-    const fetchUrl = `${baseUrl}/api/songs`;
     console.log('[SERVER] Fetching songs from:', fetchUrl);
-    console.log('[SERVER] VERCEL_URL:', process.env.VERCEL_URL);
 
     const res = await fetch(fetchUrl, {
-      next: { revalidate: 60 },
       cache: 'no-store' // Ensure fresh data
     });
 
@@ -25,7 +20,7 @@ async function getSongs(): Promise<Song[]> {
     if (!res.ok) {
       console.error("[SERVER] Backend fetch failed with status:", res.status);
       const text = await res.text();
-      console.error("[SERVER] Response body:", text);
+      console.error("[SERVER] Response body:", text.substring(0, 200));
       return [];
     }
 
